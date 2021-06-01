@@ -116,11 +116,13 @@ class DShap(object):
             )
             self.mem_tmc = np.concatenate([
                 self.mem_tmc, 
-                np.reshape(marginals, (1,-1))
+                #np.reshape(marginals, (1,-1))
+                marginals
             ])
             self.idxs_tmc = np.concatenate([
                 self.idxs_tmc, 
-                np.reshape(idxs, (1,-1))
+                #np.reshape(idxs, (1,-1))
+                idxs
             ])
 
 
