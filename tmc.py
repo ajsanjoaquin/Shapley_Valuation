@@ -150,7 +150,7 @@ class DShap(object):
             data, labels = data.to(device), labels.to(device)
             new_score = accuracy(self.model(data), labels)
 
-            marginal_contribs[idx] = (new_score - old_score) / len(idx)
+            marginal_contribs[idx] = (new_score - old_score) / idx
             distance_to_full_score = np.abs(new_score - self.mean_score)
             #  Performance Tolerance
             if distance_to_full_score <= tolerance * self.mean_score:
