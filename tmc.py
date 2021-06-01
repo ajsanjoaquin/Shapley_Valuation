@@ -39,7 +39,8 @@ class DShap(object):
         self.test_set = test_dataset
         self.train_len = len(self.train_set)
 
-        self.mem_tmc = np.zeros((0, self.train_len))
+        self.mem_tmc = np.zeros(self.train_len)
+        self.idxs_tmc = np.zeros(self.train_len, int)
         test_classes = torch.tensor([label for _, label in self.test_set])
         self.random_score = torch.max(torch.bincount(test_classes) / len(self.test_set) ).item()
 
@@ -51,9 +52,6 @@ class DShap(object):
             directory, 
             'mem_tmc_{}.pkl'.format(tmc_number.zfill(4))
         )
-
-        self.mem_tmc = np.zeros((0, self.train_len))
-        self.idxs_tmc = np.zeros((0, self.train_len), int)
         pkl.dump({'mem_tmc': self.mem_tmc, 'idxs_tmc': self.idxs_tmc}, 
                  open(tmc_dir, 'wb'))
 
