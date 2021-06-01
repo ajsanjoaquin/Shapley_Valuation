@@ -126,7 +126,7 @@ class DShap(object):
 
     def one_iteration(self, tolerance):
         """Runs one iteration of TMC-Shapley algorithm."""
-        idxs = np.random.permutation(len(self.train_len))                              #Re read algorithm. We can get random sampler with a dataloader instead
+        idxs = np.random.permutation(self.train_len)                              #Re read algorithm. We can get random sampler with a dataloader instead
         marginal_contribs = np.zeros(self.train_len)
 
         truncation_counter = 0
