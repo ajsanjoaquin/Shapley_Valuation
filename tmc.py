@@ -31,8 +31,6 @@ class DShap(object):
         if self.directory is not None:
             if not os.path.exists(directory):
                 os.makedirs(directory)  
-                os.makedirs(os.path.join(directory, 'weights'))
-                os.makedirs(os.path.join(directory, 'plots'))
 
         self.model = model
         self.train_set = train_dataset
