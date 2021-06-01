@@ -114,9 +114,6 @@ class DShap(object):
             marginals, idxs = self.one_iteration(
                 tolerance=tolerance
             )
-
-            print(marginals)
-            
             self.mem_tmc = np.concatenate([
                 self.mem_tmc, 
                 np.reshape(marginals, (1,-1))
@@ -153,7 +150,7 @@ class DShap(object):
             data, labels = data.to(device), labels.to(device)
             new_score = accuracy(self.model(data), labels)
 
-            marginal_contribs[idx] = (new_score - old_score) / idx
+            marginal_contribs[idx] = (new_score - old_score)  # original code divides by 1 for some reason
             distance_to_full_score = np.abs(new_score - self.mean_score)
             #  Performance Tolerance
             if distance_to_full_score <= tolerance * self.mean_score:
