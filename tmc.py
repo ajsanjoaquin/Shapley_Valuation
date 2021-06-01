@@ -5,7 +5,7 @@ import pickle as pkl
 import torch
 from torch.utils.data import RandomSampler, DataLoader
 
-from utils import accuracy, error   
+from .utils import accuracy, error   
 
 class DShap(object):
     
