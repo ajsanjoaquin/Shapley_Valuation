@@ -7,6 +7,7 @@ from torch.utils.data import RandomSampler, DataLoader
 
 from .utils import accuracy, error   
 
+device = ('cuda' if torch.cuda.is_available() else 'cpu')
 class DShap(object):
     
     def __init__(self, model, train_dataset, test_dataset, sources=None, 
@@ -160,6 +161,7 @@ class DShap(object):
                 data = torch.cat((data, self.train_set[sources[idx]][0]), 0)
                 labels = torch.cat((labels, self.train_set[sources[idx]][1]), 0)
 
+            data, labels = data.to(device), labels.to(device)
             new_score = accuracy(self.model(data), labels)
 
             marginal_contribs[sources[idx]] = (new_score - old_score) / len(sources[idx])
@@ -186,6 +188,7 @@ class DShap(object):
 
             # 1-pass
             for data, labels in loader:
+                data, labels = data.to(device), labels.to(device)
                 acc = accuracy(self.model(data), labels)
                 scores.append(acc)
                 break
