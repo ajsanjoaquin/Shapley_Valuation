@@ -11,15 +11,13 @@ from .utils import accuracy, error
 device = ('cuda' if torch.cuda.is_available() else 'cpu')
 class DShap(object):
     
-    def __init__(self, model, train_dataset, test_dataset, sources=None, 
+    def __init__(self, model, train_dataset, test_dataset,
                  directory=None, seed=10):
         """
         Args:
             model: Torch model
             train_dataset: Training Dataset (torch.Dataset)
             test_dataset: Test Dataset (torch.Dataset)
-            sources: An array or dictionary assiging each point to its group.
-                If None, evey points gets its individual value.
             directory: Directory to save results and figures.
             seed: Random seed. When running parallel monte-carlo samples,
                 we initialize each with a different seed to prevent getting 
@@ -39,7 +37,6 @@ class DShap(object):
         self.model = model
         self.train_set = train_dataset
         self.test_set = test_dataset
-        self.sources = sources
         self.train_len = len(self.train_set)
 
         self.mem_tmc = np.zeros((0, self.train_len))
@@ -78,7 +75,6 @@ class DShap(object):
                 self.tmc_shap(
                     save_every, 
                     tolerance=tolerance, 
-                    sources=self.sources
                 )
                 self.vals_tmc = np.mean(self.mem_tmc, 0)
             if self.directory is not None:
@@ -103,29 +99,20 @@ class DShap(object):
         tmc_number = str(np.max(tmc_nmbrs) + 1) if len(tmc_nmbrs) else '0' 
         return tmc_number
 
-    def tmc_shap(self, iterations, tolerance=0.01, sources=None):
+    def tmc_shap(self, iterations, tolerance=0.01):
         """Runs TMC-Shapley algorithm.
         
         Args:
             iterations: Number of iterations to run.
             tolerance: Truncation tolerance ratio.
-            sources: If values are for sources of data points rather than
-                   individual points. In the format of an assignment array
-                   or dict.
         """
-        if sources is None:
-            sources = {i: np.array([i]) for i in range(self.train_len)}
-        elif not isinstance(sources, dict):
-            sources = {i: np.where(sources == i)[0] for i in set(sources)}
-
         self._tol_mean_score()
         
         marginals, idxs = [], []
         for _ in tqdm(range(iterations)):
 
             marginals, idxs = self.one_iteration(
-                tolerance=tolerance, 
-                sources=sources
+                tolerance=tolerance
             )
             self.mem_tmc = np.concatenate([
                 self.mem_tmc, 
@@ -137,13 +124,9 @@ class DShap(object):
             ])
 
 
-    def one_iteration(self, tolerance, sources=None):
+    def one_iteration(self, tolerance):
         """Runs one iteration of TMC-Shapley algorithm."""
-        if sources is None:
-            sources = {i: np.array([i]) for i in range(self.train_len)}
-        elif not isinstance(sources, dict):
-            sources = {i: np.where(sources == i)[0] for i in set(sources)}
-        idxs = np.random.permutation(len(sources))                              #Re read algorithm. We can get random sampler with a dataloader instead
+        idxs = np.random.permutation(len(self.train_len))                              #Re read algorithm. We can get random sampler with a dataloader instead
         marginal_contribs = np.zeros(self.train_len)
 
         truncation_counter = 0
@@ -153,16 +136,16 @@ class DShap(object):
         for i, idx in enumerate(idxs):
             old_score = new_score
             if i == 0:
-                data = self.train_set[sources[idx]][0].unsqueeze(0)
-                labels = self.train_set[sources[idx]][1].unsqueeze(0)
+                data = self.train_set[idx][0].unsqueeze(0)
+                labels = self.train_set[idx][1].unsqueeze(0)
             else:
-                data = torch.cat((data, self.train_set[sources[idx]][0]), 0)
-                labels = torch.cat((labels, self.train_set[sources[idx]][1]), 0)
+                data = torch.cat((data, self.train_set[idx][0]), 0)
+                labels = torch.cat((labels, self.train_set[idx][1]), 0)
 
             data, labels = data.to(device), labels.to(device)
             new_score = accuracy(self.model(data), labels)
 
-            marginal_contribs[sources[idx]] = (new_score - old_score) / len(sources[idx])
+            marginal_contribs[idx] = (new_score - old_score) / len(idx)
             distance_to_full_score = np.abs(new_score - self.mean_score)
             #  Performance Tolerance
             if distance_to_full_score <= tolerance * self.mean_score:
