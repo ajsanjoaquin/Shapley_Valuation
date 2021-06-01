@@ -78,7 +78,7 @@ class DShap(object):
                 )
                 self.vals_tmc = np.mean(self.mem_tmc, 0)
             if self.directory is not None:
-                self.save_results(self.overwrite)
+                self.save_results()
         
     def save_results(self):
         """Saves results computed so far."""
