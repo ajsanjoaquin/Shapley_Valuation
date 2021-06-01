@@ -3,7 +3,6 @@ import torch
 import torch.nn.functional as F
 
 def error(mem):
-    
     if len(mem) < 100:
         return 1.0
     all_vals = (np.cumsum(mem, 0)/np.reshape(np.arange(1, len(mem)+1), (-1,1)))[-100:]

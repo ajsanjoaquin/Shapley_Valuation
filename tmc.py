@@ -133,14 +133,19 @@ class DShap(object):
         new_score = self.random_score
         self.model.train()
 
+        #  Iterates through the entire Training dataset
+        data_list = []
+        label_list = []
         for i, idx in enumerate(idxs):
             old_score = new_score
+            data_list.append(self.train_set[idx][0])
+            label_list.append(torch.tensor(self.train_set[idx][1]))
             if i == 0:
                 data = self.train_set[idx][0].unsqueeze(0)
-                labels = self.train_set[idx][1].unsqueeze(0)
+                labels = torch.tensor([self.train_set[idx][1]])
             else:
-                data = torch.cat((data, self.train_set[idx][0]), 0)
-                labels = torch.cat((labels, self.train_set[idx][1]), 0)
+                data = torch.stack(data_list, 0)
+                labels = torch.stack(label_list, 0)
 
             data, labels = data.to(device), labels.to(device)
             new_score = accuracy(self.model(data), labels)
