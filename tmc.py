@@ -41,7 +41,7 @@ class DShap(object):
         self.train_len = len(self.train_set)
 
         self.mem_tmc = np.zeros((0, self.train_len))
-        test_classes = [label for _, label in self.test_set]
+        test_classes = torch.tensor([label for _, label in self.test_set])
         self.random_score = torch.max(torch.bincount(test_classes) / len(self.test_set) ).item()
 
         self.tmc_number = self._which_parallel(self.directory)
