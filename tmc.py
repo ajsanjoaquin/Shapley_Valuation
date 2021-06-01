@@ -22,8 +22,6 @@ class DShap(object):
             seed: Random seed. When running parallel monte-carlo samples,
                 we initialize each with a different seed to prevent getting 
                 same permutations.
-            overwrite: Delete existing data and start computations from 
-                scratch
         """
             
         if seed is not None:
@@ -82,9 +80,9 @@ class DShap(object):
                 )
                 self.vals_tmc = np.mean(self.mem_tmc, 0)
             if self.directory is not None:
-                self.save_results()
+                self.save_results(self.overwrite)
         
-    def save_results(self, overwrite=False):
+    def save_results(self):
         """Saves results computed so far."""
         if self.directory is None:
             return
