@@ -114,6 +114,9 @@ class DShap(object):
             marginals, idxs = self.one_iteration(
                 tolerance=tolerance
             )
+
+            print(marginals)
+            
             self.mem_tmc = np.concatenate([
                 self.mem_tmc, 
                 np.reshape(marginals, (1,-1))
