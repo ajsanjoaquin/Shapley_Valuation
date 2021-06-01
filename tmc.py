@@ -37,8 +37,8 @@ class DShap(object):
         self.test_set = test_dataset
         self.train_len = len(self.train_set)
 
-        self.mem_tmc = np.zeros(self.train_len)
-        self.idxs_tmc = np.zeros(self.train_len, int)
+        self.mem_tmc = np.zeros((0, self.train_len))
+        self.idxs_tmc = np.zeros((0, self.train_len), int)
         test_classes = torch.tensor([label for _, label in self.test_set])
         self.random_score = torch.max(torch.bincount(test_classes) / len(self.test_set) ).item()
 
@@ -73,8 +73,8 @@ class DShap(object):
                     tolerance=tolerance, 
                 )
                 self.vals_tmc = np.mean(self.mem_tmc, 0)
-            if self.directory is not None:
-                self.save_results()
+            self.save_results()
+        
         
     def save_results(self):
         """Saves results computed so far."""
@@ -83,9 +83,10 @@ class DShap(object):
         tmc_dir = os.path.join(
             self.directory, 
             'mem_tmc_{}.pkl'.format(self.tmc_number.zfill(4))
-        )  
-        pkl.dump({'mem_tmc': self.mem_tmc, 'idxs_tmc': self.idxs_tmc},              ## EDIT
-                 open(tmc_dir, 'wb'))
+        )
+
+        tmc_dict = {self.idxs_tmc[i]:self.mem_tmc[i] for i in range(self.mem_tmc.shape[0])}  
+        pkl.dump(tmc_dict, open(tmc_dir, 'wb'))
     
     def _which_parallel(self, directory):
         '''Prevent conflict with parallel runs.'''
@@ -112,13 +113,11 @@ class DShap(object):
             )
             self.mem_tmc = np.concatenate([
                 self.mem_tmc, 
-                #np.reshape(marginals, (1,-1))
-                marginals
+                np.reshape(marginals, (1,-1))  # dims: (some number, # train samples)
             ])
             self.idxs_tmc = np.concatenate([
                 self.idxs_tmc, 
-                #np.reshape(idxs, (1,-1))
-                idxs
+                np.reshape(idxs, (1,-1))
             ])
 
 
