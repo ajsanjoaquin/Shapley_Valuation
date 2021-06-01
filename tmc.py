@@ -1,6 +1,7 @@
 import os
 import numpy as np 
 import pickle as pkl
+from tqdm.notebook import tqdm
 
 import torch
 from torch.utils.data import RandomSampler, DataLoader
@@ -120,10 +121,7 @@ class DShap(object):
         self._tol_mean_score()
         
         marginals, idxs = [], []
-        for iteration in range(iterations):
-            if 10*(iteration+1)/iterations % 1 == 0:
-                print('{} out of {} TMC_Shapley iterations.'.format(
-                    iteration + 1, iterations))
+        for _ in tqdm(range(iterations)):
 
             marginals, idxs = self.one_iteration(
                 tolerance=tolerance, 
@@ -152,9 +150,9 @@ class DShap(object):
         new_score = self.random_score
         self.model.train()
 
-        for idx in idxs:
+        for i, idx in enumerate(idxs):
             old_score = new_score
-            if idx == 0:
+            if i == 0:
                 data = self.train_set[sources[idx]][0].unsqueeze(0)
                 labels = self.train_set[sources[idx]][1].unsqueeze(0)
             else:
