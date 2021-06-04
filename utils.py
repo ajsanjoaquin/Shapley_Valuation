@@ -7,8 +7,10 @@ def error(mem):
         return 1.0
     all_vals = (np.cumsum(mem, 0)/np.reshape(np.arange(1, len(mem)+1), (-1,1)))[-100:]
     errors = np.mean(np.abs(all_vals[-100:] - all_vals[-1:])/(np.abs(all_vals[-1:]) + 1e-12), -1)
+    print('Mean Error: {}'.format(errors))
     errors = np.max(errors)
     print('Error: {}'.format(errors))
+    print(errors)
     return errors
 
 def accuracy(logits, labels):
