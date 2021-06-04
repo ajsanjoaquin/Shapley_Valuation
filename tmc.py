@@ -85,10 +85,14 @@ class DShap(object):
             'mem_tmc_{}.pkl'.format(self.tmc_number.zfill(4))
         )
 
-        #tmc_dict = {self.idxs_tmc[i]:self.mem_tmc[i] for i in range(self.mem_tmc.shape[0])} 
-        #pkl.dump(tmc_dict, open(tmc_dir, 'wb'))
-        pkl.dump({'mem_tmc': self.mem_tmc, 'idxs_tmc': self.idxs_tmc}, 
-                 open(tmc_dir, 'wb'))
+        raw_list = []
+        for j in range(self.mem_tmc.shape[0]):
+            row_dict = { self.idxs_tmc[j][i] : self.mem_tmc[j][i] for i in range(self.mem_tmc.shape[1]) }
+            raw_list.append(row_dict)
+
+        pkl.dump(raw_list, open(tmc_dir, 'wb'))
+        #pkl.dump({'mem_tmc': self.mem_tmc, 'idxs_tmc': self.idxs_tmc}, 
+        #         open(tmc_dir, 'wb'))
     
     def _which_parallel(self, directory):
         '''Prevent conflict with parallel runs.'''
