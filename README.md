@@ -1,8 +1,8 @@
 # Equitable Valuation of Data Using Shapley Values (PyTorch Implementation)
 
-This is a PyTorch reimplementation of Computing Shapley Values via Truncated Monte Carlo Simulation from 
+This is a PyTorch reimplementation of Computing Shapley Values via Truncated Monte Carlo sampling from 
 [What is your data worth? Equitable Valuation of Data](https://arxiv.org/abs/1904.02868) by Amirata Ghorbani and James Zou.
-The original implementation (In Tensorflow) can be found here: [link](https://github.com/amiratag/DataShapley).
+The original implementation (In Tensorflow) can be found [here](https://github.com/amiratag/DataShapley).
 
 This implementation is currently designed for neural networks, and the only available performance metric is model classification accuracy, 
 but contributions to expand the implementation are welcome. 
