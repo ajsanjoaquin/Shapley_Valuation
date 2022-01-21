@@ -1,4 +1,5 @@
 # Equitable Valuation of Data Using Shapley Values (PyTorch Implementation)
+### Note: the implementation is currently lacking a retraining step. I welcome any PRs to fix this. See [#1](https://github.com/ajsanjoaquin/Shapley_Valuation/issues/1).
 
 This is a PyTorch reimplementation of Computing Shapley Values via Truncated Monte Carlo sampling from 
 [What is your data worth? Equitable Valuation of Data](https://arxiv.org/abs/1904.02868) by Amirata Ghorbani and James Zou.
