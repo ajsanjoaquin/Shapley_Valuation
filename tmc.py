@@ -12,7 +12,7 @@ device = ('cuda' if torch.cuda.is_available() else 'cpu')
 class DShap(object):
     
     def __init__(self, model, train_dataset, test_dataset,
-                 directory=None, seed=10):
+                 directory=None, seed=10, n_epochs=1, lr=0.01):
         """
         Args:
             model: Torch model
@@ -20,12 +20,17 @@ class DShap(object):
             test_dataset: Test Dataset (torch.Dataset)
             directory: Directory to save results and figures.
             seed: Random seed. When running parallel monte-carlo samples,
-                we initialize each with a different seed to prevent getting 
+                we initialize each with a different seed to prevent getting
                 same permutations.
+            n_epochs: Number of training epochs per subset evaluation.
+            lr: Learning rate for SGD optimizer used during subset training.
         """
             
         if seed is not None:
             np.random.seed(seed)
+
+        self.n_epochs = n_epochs
+        self.lr = lr
 
         self.directory = directory
         if self.directory is not None:
@@ -129,39 +134,58 @@ class DShap(object):
 
     def one_iteration(self, tolerance):
         """Runs one iteration of TMC-Shapley algorithm."""
-        idxs = np.random.permutation(self.train_len)                              #Re read algorithm. We can get random sampler with a dataloader instead
+        idxs = np.random.permutation(self.train_len)
         marginal_contribs = np.zeros(self.train_len)
 
         truncation_counter = 0
         new_score = self.random_score
-        self.model.train()
 
-        #  Iterates through the entire Training dataset
+        # Save initial weights so each subset is trained from the same starting point
+        initial_state = {k: v.clone() for k, v in self.model.state_dict().items()}
+        criterion = torch.nn.CrossEntropyLoss()
+        test_loader = DataLoader(self.test_set, batch_size=512)
+
         data_list = []
         label_list = []
-        for i, idx in enumerate(idxs):
+        for idx in idxs:
             old_score = new_score
             data_list.append(self.train_set[idx][0])
             label_list.append(torch.tensor(self.train_set[idx][1]))
-            if i == 0:
-                data = self.train_set[idx][0].unsqueeze(0)
-                labels = torch.tensor([self.train_set[idx][1]])
-            else:
-                data = torch.stack(data_list, 0)
-                labels = torch.stack(label_list, 0)
 
-            data, labels = data.to(device), labels.to(device)
-            new_score = accuracy(self.model(data), labels)
+            data = torch.stack(data_list, 0).to(device)
+            labels = torch.stack(label_list, 0).to(device)
 
-            marginal_contribs[idx] = (new_score - old_score)  # original code divides by 1 for some reason
-            distance_to_full_score = np.abs(new_score - self.mean_score)
-            #  Performance Tolerance
-            if distance_to_full_score <= tolerance * self.mean_score:
+            # Truncation check uses previous score (v^t_{j-1}) per Algorithm 1
+            if np.abs(old_score - self.mean_score) <= tolerance * self.mean_score:
                 truncation_counter += 1
                 if truncation_counter > 5:
                     break
             else:
                 truncation_counter = 0
+
+                # Reset to initial weights and train on the current subset
+                self.model.load_state_dict(initial_state)
+                self.model.train()
+                optimizer = torch.optim.SGD(self.model.parameters(), lr=self.lr)
+                for _ in range(self.n_epochs):
+                    optimizer.zero_grad()
+                    loss = criterion(self.model(data), labels)
+                    loss.backward()
+                    optimizer.step()
+
+                # Evaluate on test set (V in the algorithm)
+                self.model.eval()
+                with torch.no_grad():
+                    batch_scores = []
+                    for test_data, test_labels in test_loader:
+                        test_data, test_labels = test_data.to(device), test_labels.to(device)
+                        batch_scores.append(accuracy(self.model(test_data), test_labels))
+                new_score = np.mean(batch_scores)
+
+            marginal_contribs[idx] = (new_score - old_score)
+
+        # Restore model to its state before this iteration
+        self.model.load_state_dict(initial_state)
         return marginal_contribs, idxs
 
 
